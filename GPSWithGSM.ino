@@ -27,7 +27,7 @@ byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
 //IPAddress server(74,125,232,128);  // numeric IP for Google (no DNS)
 //char server[] = "www.google.com";    // name address for Google (using DNS)
 //char server[] = "http://lppapproval.eu-gb.mybluemix.net";
-//char server[] = "www.httpbin.org";
+//  char server[] = "www.httpbin.org";
   char server[] = "http://mywebapps.mybluemix.net";
 
 // Set the static IP address to use if the DHCP fails to assign
@@ -40,7 +40,7 @@ EthernetClient client;
 TinyGPS gps;
 SoftwareSerial ss(4, 3);
 bool conn;
-
+char* id;
 static void smartdelay(unsigned long ms);
 static void print_float(float val, float invalid, int len, int prec,char buf[]);
 static void print_int(unsigned long val, unsigned long invalid, int len,char buf[]);
@@ -65,6 +65,7 @@ void setup() {
     Ethernet.begin(mac, ip);
   }
   conn = false;
+  id = "7ecc5fe6-b2a9-e034-d4e2-a034ed3ebfb8";
   // give the Ethernet shield a second to initialize:
   delay(1000);
 }
@@ -101,7 +102,7 @@ void loop()
 //  char* string = aJson.print(json);
 //  Serial.println(string);
 //  Serial.println();
-  char json[150];
+  char json[250];
   formJSON1(sats,hdopVAL,latt,lon,dateTime,alt,speedkmph,json);
   Serial.println(json);
   smartdelay(5000);
@@ -126,26 +127,41 @@ void loop()
   }
   
     // Make a HTTP request:
-//    client.println("GET /get text/html");
+//    client.println("GET /get HTTP/1.1");
 //    //client.println(" HTTP/1.1");
-//    //client.println("Content-Type: application/json;charset=utf-8");
+//    client.println("Content-Type: application/json;charset=utf-8");
 //    client.println("Host: www.httpbin.org");
 //    client.println("Connection: close");
 //    client.println();
 
     if(client.connected() && strlen(json) > 10){
       Serial.println("POSTing");
-      // Make a HTTP PUT request:
+      // Make a HTTP POST request:
       client.println("POST /api/Mydb/PushInfo HTTP/1.1");
+//      client.println("POST /post HTTP/1.1");
       client.println("Host: mywebapps.mybluemix.net");
-      client.println("Content-Length: ");
-      client.print(strlen(json)) ; 
       client.println("Content-Type: application/json;charset=utf-8");
+      client.println("Connection: close");
+      client.print("Content-Length: ");
+      client.println(strlen(json)) ;
+      //client.println();     
       client.println(json);
       //client.println("Arduino");  
-      client.println("Keep-Alive: 10000"); 
-      client.println("Connection: keep-alive");
+//      client.println("Keep-Alive: 10000"); 
       client.println();
+      
+
+      Serial.println("POST /api/Mydb/PushInfo HTTP/1.1");
+      Serial.println("Host: mywebapps.mybluemix.net");
+      Serial.println("Content-Type: application/json;charset=utf-8");
+      Serial.println("Connection: close");
+      Serial.print("Content-Length: ");
+      Serial.println(strlen(json)) ;
+      Serial.println();     
+      Serial.println(json);
+      //client.println("Arduino");  
+//      client.println("Keep-Alive: 10000"); 
+      Serial.println();
     }
   
   
@@ -185,17 +201,17 @@ void formJSON1(char sats[],char hdopVal[],char latt[],char lon[],char dateTime[]
   Serial.println("Inside formJSON");
   if(sats[0] != '*' && hdopVal[0] != '*' && latt[0] != '*' && lon[0] != '*' && dateTime[0] != '*' && alt[0] != '*' && speedkmph[0] != '*' && json[0] != '*')
   {
-    int len = 100 +strlen(speedkmph)+strlen(sats)+strlen(hdopVal)+strlen(latt)+strlen(lon)+strlen(dateTime)+strlen(alt);
+    int len = 100 +strlen(speedkmph)+strlen(sats)+strlen(hdopVal)+strlen(latt)+strlen(lon)+strlen(dateTime)+strlen(alt)+strlen(id);
     char str[len];
     Serial.println(len);
     
-    strcpy(str,"{\"sats\":\"");
-    strcat(str,sats);
+    strcpy(str,"{\"_id\":\"");
+    strcat(str,id);
     strcat(str,"\",");
     
-  //  strcat(str,"\"hdop\":\"");
-  //  strcat(str,hdopVal);
-  //  strcat(str,"\",");
+    strcat(str,"\"devicename\":\"");
+    strcat(str,hdopVal);
+    strcat(str,"\",");
   
     strcat(str,"\"latt\":\"");
     strcat(str,latt);  
@@ -216,9 +232,13 @@ void formJSON1(char sats[],char hdopVal[],char latt[],char lon[],char dateTime[]
     strcat(str,"\"speed\":\"");
     strcat(str,speedkmph);
     strcat(str,"\",");
-    
-    strcat(str,"\"DeviceName\":\"");
-    strcat(str,"1");
+
+//    strcat(str,"\"_id\":\"");
+//    strcat(str,id);
+//    strcat(str,"\",");
+//    
+    strcat(str,"\"type\":\"");
+    strcat(str,"Device");
     strcat(str,"\"}");
     
     Serial.println(strlen(str));  
