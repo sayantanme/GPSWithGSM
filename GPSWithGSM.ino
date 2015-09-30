@@ -47,6 +47,7 @@ static void print_int(unsigned long val, unsigned long invalid, int len,char buf
 static void print_date(TinyGPS &gps,char buf1[]);
 //aJsonObject* formJSON(char sats[],char hdopVal[],char latt[],char lon[],char dateTime[],char alt[],char speedkmph[]);
 void formJSON1(char sats[],char hdopVal[],char latt[],char lon[],char dateTime[],char alt[],char speedkmph[],char json[]);
+void formString(char sats[],char hdopVal[],char latt[],char lon[],char dateTime[],char alt[],char speedkmph[],char json[]);
 
 void setup() {
   // Open serial communications and wait for port to open:
@@ -65,7 +66,7 @@ void setup() {
     Ethernet.begin(mac, ip);
   }
   conn = false;
-  id = "7ecc5fe6-b2a9-e034-d4e2-a034ed3ebfb8";
+  id = "7ecc5fe6-b2a9-e034-d4e2-a034ed3eb299";
   // give the Ethernet shield a second to initialize:
   delay(1000);
 }
@@ -103,7 +104,7 @@ void loop()
 //  Serial.println(string);
 //  Serial.println();
   char json[250];
-  formJSON1(sats,hdopVAL,latt,lon,dateTime,alt,speedkmph,json);
+  formString(sats,hdopVAL,latt,lon,dateTime,alt,speedkmph,json);
   Serial.println(json);
   smartdelay(5000);
   //*************************************
@@ -125,43 +126,47 @@ void loop()
       conn = false;
     }
   }
-  
-    // Make a HTTP request:
-//    client.println("GET /get HTTP/1.1");
-//    //client.println(" HTTP/1.1");
-//    client.println("Content-Type: application/json;charset=utf-8");
-//    client.println("Host: www.httpbin.org");
-//    client.println("Connection: close");
-//    client.println();
 
     if(client.connected() && strlen(json) > 10){
-      Serial.println("POSTing");
-      // Make a HTTP POST request:
-      client.println("POST /api/Mydb/PushInfo HTTP/1.1");
-//      client.println("POST /post HTTP/1.1");
-      client.println("Host: mywebapps.mybluemix.net");
+      // Make a HTTP request:
+      client.print("GET /api/Mydb/");
+      client.print(json);
+      client.println(" HTTP/1.1");
+      //client.println(" HTTP/1.1");
       client.println("Content-Type: application/json;charset=utf-8");
+      client.println("Host: mywebapps.mybluemix.net");
       client.println("Connection: close");
-      client.print("Content-Length: ");
-      client.println(strlen(json)) ;
-      //client.println();     
-      client.println(json);
-      //client.println("Arduino");  
-//      client.println("Keep-Alive: 10000"); 
       client.println();
-      
+    }
 
-      Serial.println("POST /api/Mydb/PushInfo HTTP/1.1");
-      Serial.println("Host: mywebapps.mybluemix.net");
-      Serial.println("Content-Type: application/json;charset=utf-8");
-      Serial.println("Connection: close");
-      Serial.print("Content-Length: ");
-      Serial.println(strlen(json)) ;
-      Serial.println();     
-      Serial.println(json);
-      //client.println("Arduino");  
-//      client.println("Keep-Alive: 10000"); 
-      Serial.println();
+    if(client.connected() && strlen(json) > 10){
+//      Serial.println("POSTing");
+//      // Make a HTTP POST request:
+//      client.println("POST /api/Mydb/PushInfo HTTP/1.1");
+////      client.println("POST /post HTTP/1.1");
+//      client.println("Host: mywebapps.mybluemix.net");
+//      client.println("Content-Type: application/json;charset=utf-8");
+//      client.println("Connection: close");
+//      client.print("Content-Length: ");
+//      client.println(strlen(json)) ;
+//      client.println();     
+//      client.println(json);
+//      //client.println("Arduino");  
+////      client.println("Keep-Alive: 10000"); 
+//      client.println();
+//      
+//
+//      Serial.println("POST /api/Mydb/PushInfo HTTP/1.1");
+//      Serial.println("Host: mywebapps.mybluemix.net");
+//      Serial.println("Content-Type: application/json;charset=utf-8");
+//      Serial.println("Connection: close");
+//      Serial.print("Content-Length: ");
+//      Serial.println(strlen(json)) ;
+//      Serial.println();     
+//      Serial.println(json);
+//      //client.println("Arduino");  
+////      client.println("Keep-Alive: 10000"); 
+//      Serial.println();
     }
   
   
@@ -210,7 +215,7 @@ void formJSON1(char sats[],char hdopVal[],char latt[],char lon[],char dateTime[]
     strcat(str,"\",");
     
     strcat(str,"\"devicename\":\"");
-    strcat(str,hdopVal);
+    strcat(str,"Arduino");
     strcat(str,"\",");
   
     strcat(str,"\"latt\":\"");
@@ -221,7 +226,7 @@ void formJSON1(char sats[],char hdopVal[],char latt[],char lon[],char dateTime[]
     strcat(str,lon);
     strcat(str,"\",");
   
-    strcat(str,"\"dateTime\":\"");
+    strcat(str,"\"datetime\":\"");
     strcat(str,dateTime);
     strcat(str,"\",");
   
@@ -231,21 +236,94 @@ void formJSON1(char sats[],char hdopVal[],char latt[],char lon[],char dateTime[]
   
     strcat(str,"\"speed\":\"");
     strcat(str,speedkmph);
-    strcat(str,"\",");
+    strcat(str,"\"}");
 
 //    strcat(str,"\"_id\":\"");
 //    strcat(str,id);
 //    strcat(str,"\",");
 //    
-    strcat(str,"\"type\":\"");
-    strcat(str,"Device");
-    strcat(str,"\"}");
+//    strcat(str,"\"type\":\"");
+//    strcat(str,"Device");
+//    strcat(str,"\"}");
     
     Serial.println(strlen(str));  
     Serial.println(str);
     Serial.println("Leaving formJSON");
     strcpy(json,str);
   }
+}
+
+void formString(char sats[],char hdopVal[],char latt[],char lon[],char dateTime[],char alt[],char speedkmph[],char json[])
+{
+  Serial.println("Inside formString");
+  if(sats[0] != '*' && hdopVal[0] != '*' && latt[0] != '*' && lon[0] != '*' && dateTime[0] != '*' && alt[0] != '*' && speedkmph[0] != '*' && json[0] != '*')
+  {
+    
+    int len = 100 +strlen(speedkmph)+strlen(sats)+strlen(hdopVal)+strlen(latt)+strlen(lon)+strlen(dateTime)+strlen(alt)+strlen(id);
+    char str[len];
+    Serial.println(len);
+    
+    strcpy(str,"_id:");
+    strcat(str,id);
+    strcat(str,",");
+    
+    strcat(str,"devicename:");
+    strcat(str,"Arduino");
+    strcat(str,",");
+
+    trimarray(latt);
+    strcat(str,"latt:");
+    strcat(str,latt);  
+    strcat(str,",");
+
+    trimarray(lon);
+    strcat(str,"lon:");
+    strcat(str,lon);
+    strcat(str,",");
+  
+//    strcat(str,"datetime:");
+//    strcat(str,dateTime);
+//    strcat(str,",");
+
+    trimarray(alt);
+    strcat(str,"alt:");
+    strcat(str,alt);
+    strcat(str,",");
+
+    trimarray(speedkmph);
+    strcat(str,"speed:");
+    strcat(str,speedkmph);
+//    strcat(str,"\"}");
+
+//    strcat(str,"\"_id\":\"");
+//    strcat(str,id);
+//    strcat(str,"\",");
+//    
+//    strcat(str,"\"type\":\"");
+//    strcat(str,"Device");
+//    strcat(str,"\"}");
+    
+    Serial.println(strlen(str));  
+    Serial.println(str);
+    Serial.println("Leaving formString");
+    strcpy(json,str);
+  }
+}
+
+void trimarray(char string[]){
+  //Serial.println("In trim"); 
+  for (int i=0; i<strlen(string); i++)
+    {
+      //Serial.println(string); 
+      //delay(500);   
+      if(string[i] == ' ')
+      {
+        for(int j = i;j<(strlen(string)-1); j++){
+        string[j]=string[j+1];        
+        }
+      }
+    }
+    //Serial.println("Leaving trim");
 }
 static void smartdelay(unsigned long ms)
 {
